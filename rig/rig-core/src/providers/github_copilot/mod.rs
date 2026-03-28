@@ -35,6 +35,7 @@
 //! ```
 
 pub mod embedding;
+pub mod model_listing;
 pub mod oauth;
 
 pub use embedding::{TEXT_EMBEDDING_3_LARGE, TEXT_EMBEDDING_3_SMALL};
@@ -95,7 +96,7 @@ impl<H> Capabilities<H> for CopilotExt {
     type Completion = Capable<CompletionModel<H>>;
     type Embeddings = Capable<embedding::EmbeddingModel<H>>;
     type Transcription = Nothing;
-    type ModelListing = Nothing;
+    type ModelListing = Capable<model_listing::CopilotModelLister<H>>;
     #[cfg(feature = "image")]
     type ImageGeneration = Nothing;
     #[cfg(feature = "audio")]
