@@ -1,7 +1,7 @@
 //! GitHub Copilot API client and Rig integration
 //!
-//! The Copilot API requires a short-lived Copilot API token
-//! obtained through a two-step flow:
+//! The Copilot API is OpenAI-compatible (`/chat/completions`) and requires a
+//! short-lived Copilot API token obtained through a two-step flow:
 //!
 //! 1. Authenticate with GitHub via OAuth device flow to get a GitHub token.
 //! 2. Exchange the GitHub token for a Copilot API token via
@@ -34,8 +34,10 @@
 //! # }
 //! ```
 
+pub mod embedding;
 pub mod oauth;
 
+pub use embedding::{TEXT_EMBEDDING_3_LARGE, TEXT_EMBEDDING_3_SMALL};
 
 use std::collections::HashMap;
 
@@ -91,7 +93,7 @@ impl Provider for CopilotExt {
 
 impl<H> Capabilities<H> for CopilotExt {
     type Completion = Capable<CompletionModel<H>>;
-    type Embeddings = Nothing;
+    type Embeddings = Capable<embedding::EmbeddingModel<H>>;
     type Transcription = Nothing;
     type ModelListing = Nothing;
     #[cfg(feature = "image")]
