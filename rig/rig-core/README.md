@@ -60,6 +60,7 @@ Rig supports the following LLM providers out of the box:
 - Deepseek
 - Galadriel
 - Gemini
+- Github Copilot
 - Groq
 - Huggingface
 - Hyperbolic

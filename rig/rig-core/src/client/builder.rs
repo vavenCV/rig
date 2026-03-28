@@ -24,7 +24,7 @@ use crate::{
     embeddings::EmbeddingModelDyn,
     message::Message,
     providers::{
-        anthropic, azure, cohere, deepseek, galadriel, gemini, groq, huggingface, hyperbolic, mira,
+        anthropic, azure, cohere, deepseek, galadriel, gemini, github_copilot, groq, huggingface, hyperbolic, mira,
         mistral, moonshot, ollama, openai, openrouter, perplexity, together, xai,
     },
     streaming::StreamingCompletionResponse,
@@ -186,6 +186,7 @@ pub enum DefaultProviders {
     Mistral,
     Ollama,
     Perplexity,
+    GithubCopilot,
 }
 
 impl From<DefaultProviders> for &'static str {
@@ -211,6 +212,7 @@ impl From<DefaultProviders> for &'static str {
             Mistral => "mistral",
             Ollama => "ollama",
             Perplexity => "perplexity",
+            GithubCopilot => "github_copilot",
         }
     }
 }
@@ -246,6 +248,7 @@ impl DefaultProviders {
             Mistral,
             Ollama,
             Perplexity,
+            GithubCopilot,
         ]
         .into_iter()
     }
@@ -273,6 +276,7 @@ impl DefaultProviders {
             Mistral => || Ok(AnyClient::new(mistral::Client::from_env())),
             Ollama => || Ok(AnyClient::new(ollama::Client::from_env())),
             Perplexity => || Ok(AnyClient::new(perplexity::Client::from_env())),
+            GithubCopilot => || Ok(AnyClient::new(github_copilot::Client::from_env())),
         }
     }
 }
