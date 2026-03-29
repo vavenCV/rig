@@ -219,8 +219,29 @@ where
             let response_body = response.into_body().into_future().await?.to_vec();
 
             if status.is_success() {
-                match serde_json::from_slice::<ApiResponse<CompletionResponse>>(&response_body)? {
-                    ApiResponse::Ok(response) => {
+                tracing::debug!(
+                    target: "rig::completions",
+                    "GitHub Copilot raw response body: {}",
+                    String::from_utf8_lossy(&response_body)
+                );
+
+                // Copilot responses omit "object" and "created" fields that the
+                // OpenAI CompletionResponse struct requires — inject defaults.
+                let patched = {
+                    let mut json: serde_json::Value =
+                        serde_json::from_slice(&response_body)?;
+                    if let Some(obj) = json.as_object_mut() {
+                        obj.entry("object").or_insert_with(|| {
+                            serde_json::Value::String("chat.completion".to_string())
+                        });
+                        obj.entry("created")
+                            .or_insert_with(|| serde_json::Value::Number(0.into()));
+                    }
+                    json
+                };
+
+                match serde_json::from_value::<CompletionResponse>(patched) {
+                    Ok(response) => {
                         let span = tracing::Span::current();
                         span.record("gen_ai.response.id", response.id.clone());
                         span.record("gen_ai.response.model_name", response.model.clone());
@@ -249,7 +270,19 @@ where
 
                         response.try_into()
                     }
-                    ApiResponse::Err(err) => Err(CompletionError::ProviderError(err.message)),
+                    Err(e) => {
+                        // Fall back: check if it's an API error response
+                        if let Ok(err_resp) =
+                            serde_json::from_slice::<ApiErrorResponse>(&response_body)
+                        {
+                            Err(CompletionError::ProviderError(err_resp.message))
+                        } else {
+                            Err(CompletionError::ProviderError(format!(
+                                "Failed to parse Copilot response: {e}. Body: {}",
+                                String::from_utf8_lossy(&response_body)
+                            )))
+                        }
+                    }
                 }
             } else {
                 Err(CompletionError::ProviderError(
